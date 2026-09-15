@@ -1,19 +1,21 @@
 const labels = {
-  running: "Operativo",
+  running: "Running",
+  stopped: "Stopped",
   pending: "Pendiente",
   down: "Caído",
-  online: "En línea",
-  offline: "Desconectado",
+  online: "Online",
+  offline: "Offline",
   safe: "Seguro",
-  warning: "Advertencia",
+  warning: "Warning",
   critical: "Crítico",
 };
 
 export default function Badge({ value }) {
+  const normalizedValue = String(value).toLowerCase();
   return (
-    <span className={`badge badge-${value.toLowerCase()}`}>
+    <span className={`badge badge-${normalizedValue}`}>
       <span className="badge-dot" />
-      {labels[value] || value}
+      {labels[normalizedValue] || value}
     </span>
   );
 }

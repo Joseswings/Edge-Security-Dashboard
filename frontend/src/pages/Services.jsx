@@ -1,5 +1,4 @@
 import ServiceCards from "../components/ServiceCards.jsx";
-import Architecture from "../components/Architecture.jsx";
 
 export default function Services({ services }) {
   return (
@@ -9,7 +8,6 @@ export default function Services({ services }) {
         Suricata, Docker, PostgreSQL ni de la VM.
       </div>
       <ServiceCards services={services} detailed />
-      <Architecture />
     </>
   );
 }

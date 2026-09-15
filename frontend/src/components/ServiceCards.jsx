@@ -2,14 +2,24 @@ import Badge from "./Badge.jsx";
 import Icon from "./Icon.jsx";
 import { formatDate } from "../services/format.js";
 
+const serviceIcons = {
+  suricata: "shield",
+  api: "pulse",
+  database: "database",
+  vm: "cloud",
+};
+
 export default function ServiceCards({ services, detailed = false }) {
   return (
     <div className={`service-grid ${detailed ? "detailed" : ""}`}>
       {services.map((service) => (
-        <article className="service-card" key={service.id}>
+        <article
+          className={`service-card service-card-${service.status}`}
+          key={service.id}
+        >
           <div className="service-heading">
             <span className="icon-box">
-              <Icon name="services" />
+              <Icon name={serviceIcons[service.id] || "services"} />
             </span>
             <Badge value={service.status} />
           </div>

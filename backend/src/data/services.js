@@ -18,9 +18,10 @@ export const services = [
   {
     id: "database",
     name: "Database",
-    status: "pending",
+    status: "warning",
     layer: "PaaS",
-    description: "PostgreSQL pendiente de integración. Datos en memoria.",
+    description:
+      "Persistirá alertas, dispositivos y estados. PostgreSQL aún no está conectado.",
     checkedAt: "2026-09-14T20:31:00Z",
   },
   {
@@ -28,7 +29,8 @@ export const services = [
     name: "Ubuntu Security VM",
     status: "running",
     layer: "IaaS",
-    description: "ubuntu-security sobre KubeVirt/K3s en Raspberry Pi 5.",
+    description:
+      "Máquina Ubuntu Security que ejecutará los servicios sobre KubeVirt.",
     checkedAt: "2026-09-14T20:31:00Z",
   },
 ];

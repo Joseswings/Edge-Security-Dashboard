@@ -5,7 +5,7 @@ export function calculateStatus(alerts, services) {
   const active = alerts.filter((alert) => alert.status === "new");
   if (
     active.some((alert) => alert.severity === "CRITICAL") ||
-    services.some((service) => service.status === "down")
+    services.some((service) => ["stopped", "down"].includes(service.status))
   ) {
     return {
       status: "critical",
@@ -21,7 +21,7 @@ export function calculateStatus(alerts, services) {
     return {
       status: "warning",
       label: "Advertencia",
-      message: "Hay alertas por revisar o servicios pendientes de integración.",
+      message: "Hay alertas por revisar o servicios en estado de advertencia.",
     };
   }
   return {

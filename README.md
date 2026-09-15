@@ -47,10 +47,12 @@ Para consultar después la API de la VM durante el desarrollo, cambia `API_PROXY
 
 ## Vistas
 
-- **Overview:** estado general, dispositivos, alertas totales y críticas, servicios operativos, distribución por severidad, últimas cinco alertas y arquitectura Cloud.
+- **Overview:** cinco tarjetas para System Status, Total Alerts, Critical Alerts, Devices Online y Services Running; distribución por severidad, alertas recientes y actividad de dispositivos.
 - **Alerts:** severidad, firma, IP origen/destino, protocolo, fecha/hora y estado `new`, `reviewed` o `ignored`. Permite buscar y filtrar por severidad y estado.
 - **Devices:** IP, hostname, MAC simulada, estado, última actividad y eventos asociados; búsqueda por hostname, IP o MAC.
-- **Services:** Suricata, API, Database y Ubuntu Security VM, con estado y comprobación simulados.
+- **Services:** Suricata, API, Database y Ubuntu Security VM, con estados `running`, `warning` o `stopped` y comprobación simulada.
+
+El bloque persistente **Cloud Service Model** aparece en todas las vistas y resume IaaS, PaaS y SaaS para facilitar la explicación de la arquitectura durante una exposición.
 
 La navegación usa fragmentos (`#overview`, `#alerts`, `#devices`, `#services`) y soporta recarga y botones atrás/adelante. **Actualizar** vuelve a consultar la API. No hay polling, autenticación, cambios de estado ni persistencia en este MVP. Las fechas se muestran en la zona horaria del navegador.
 
@@ -86,13 +88,13 @@ El ejemplo es un elemento del array devuelto por `/api/alerts`. Los filtros se a
 
 ## Datos y reglas del MVP
 
-Los fixtures son una captura fija del 14 de septiembre de 2026: **6 dispositivos, 8 alertas, 2 críticas y 3 de 4 servicios operativos simulados**. Todos los estados de infraestructura son simulados, incluido API; recibir una respuesta demuestra conectividad con Express, pero no comprueba los demás servicios. Database figura pendiente porque aún no está integrada. Actualizar consulta nuevamente los fixtures y no genera telemetría nueva.
+Los fixtures son una captura fija del 14 de septiembre de 2026: **6 dispositivos, 8 alertas, 2 críticas y 3 de 4 servicios en estado running**. Todos los estados de infraestructura son simulados, incluido API; recibir una respuesta demuestra conectividad con Express, pero no comprueba los demás servicios. Database figura en warning porque aún no está integrada. Actualizar consulta nuevamente los fixtures y no genera telemetría nueva.
 
 `transformEvent()` en `alertService.js` transforma eventos estilo Suricata EVE al contrato del frontend. Se ignoran eventos que no sean alertas. La política de este MVP transforma prioridades `1 → HIGH`, `2 → MEDIUM`, `3 → LOW`; `CRITICAL` se declara explícitamente en `dashboard.severity`, un campo propio de los fixtures. No se inventa un nivel numérico de Suricata para CRITICAL. Una prioridad desconocida se presenta como MEDIUM de forma conservadora. En la integración real, esta política deberá validarse y documentarse junto con las reglas del sensor.
 
 Estado general:
 
-1. **Crítico:** hay una alerta CRITICAL con estado `new` o un servicio `down`.
+1. **Crítico:** hay una alerta CRITICAL con estado `new` o un servicio `stopped`.
 2. **Advertencia:** hay una alerta HIGH/MEDIUM con estado `new` o algún servicio que no está `running`.
 3. **Seguro:** ninguna condición anterior. Puede haber alertas LOW o alertas ya revisadas/ignoradas.
 

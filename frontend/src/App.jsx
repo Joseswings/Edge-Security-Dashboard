@@ -4,6 +4,7 @@ import Overview from "./pages/Overview.jsx";
 import Alerts from "./pages/Alerts.jsx";
 import Devices from "./pages/Devices.jsx";
 import Services from "./pages/Services.jsx";
+import Architecture from "./components/Architecture.jsx";
 import { useDashboard } from "./services/useDashboard.js";
 
 const pages = {
@@ -181,6 +182,9 @@ export default function App() {
               {page === "services" && <Services services={data.services} />}
             </div>
           )}
+          <div className="cloud-model-slot">
+            <Architecture />
+          </div>
           <footer className="main-footer">
             <span>Edge Cybersecurity Cloud</span>
             <span>MVP · Telemetría mock · Solo lectura</span>

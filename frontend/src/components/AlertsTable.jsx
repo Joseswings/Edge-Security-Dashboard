@@ -29,7 +29,10 @@ export default function AlertsTable({ alerts }) {
         </thead>
         <tbody>
           {alerts.map((alert) => (
-            <tr key={alert.id}>
+            <tr
+              key={alert.id}
+              className={`alert-row alert-row-${alert.severity.toLowerCase()}`}
+            >
               <td>
                 <Badge value={alert.severity} />
               </td>

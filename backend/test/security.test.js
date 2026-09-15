@@ -50,6 +50,10 @@ test("estado considera alertas nuevas y disponibilidad de servicios", () => {
     "critical",
   );
   assert.equal(calculateStatus([], [{ status: "down" }]).status, "critical");
+  assert.equal(
+    calculateStatus([], [{ status: "stopped" }]).status,
+    "critical",
+  );
 });
 
 test("los cinco endpoints responden y sus métricas coinciden con los listados", async (t) => {

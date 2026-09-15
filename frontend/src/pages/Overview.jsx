@@ -1,76 +1,106 @@
-import Icon from "../components/Icon.jsx";
-import Badge from "../components/Badge.jsx";
 import AlertsTable from "../components/AlertsTable.jsx";
+import Badge from "../components/Badge.jsx";
+import DeviceSnapshot from "../components/DeviceSnapshot.jsx";
+import Icon from "../components/Icon.jsx";
 import ServiceCards from "../components/ServiceCards.jsx";
-import Architecture from "../components/Architecture.jsx";
 
 export default function Overview({ data, navigate }) {
-  const { status, summary, alerts, services } = data;
+  const { status, summary, alerts, devices, services } = data;
   const metrics = [
     {
-      label: "Dispositivos detectados",
-      value: summary.totalDevices,
-      note: `${summary.onlineDevices} en línea`,
-      icon: "devices",
+      label: "System Status",
+      value: status.label,
+      note: "Nivel de riesgo actual",
+      icon: "shield",
+      tone: status.status,
     },
     {
-      label: "Alertas registradas",
+      label: "Total Alerts",
       value: summary.totalAlerts,
       note: `${summary.newAlerts} pendientes de revisión`,
       icon: "alerts",
     },
     {
-      label: "Alertas críticas",
+      label: "Critical Alerts",
       value: summary.criticalAlerts,
-      note: "En el conjunto de datos",
-      icon: "shield",
-      critical: true,
+      note: "Requieren atención inmediata",
+      icon: "pulse",
+      tone: "critical",
     },
     {
-      label: "Servicios operativos",
+      label: "Devices Online",
+      value: `${summary.onlineDevices}/${summary.totalDevices}`,
+      note: "Equipos activos en la red",
+      icon: "wifi",
+    },
+    {
+      label: "Services Running",
       value: `${summary.runningServices}/${summary.totalServices}`,
-      note: "Estado de servicios simulado",
+      note: "Componentes operativos",
       icon: "services",
     },
   ];
+
   return (
     <>
-      <section className={`status-banner status-${status.status}`}>
-        <span className="status-symbol">
-          <Icon name="shield" size={28} />
-        </span>
-        <div>
-          <div className="status-title">
-            <h2>Estado del sistema</h2>
-            <Badge value={status.status} />
+      <section className="metrics" aria-label="Métricas principales">
+        {metrics.map((metric) => (
+          <article
+            className={`metric ${metric.tone ? `metric-${metric.tone}` : ""}`}
+            key={metric.label}
+          >
+            <div className="metric-heading">
+              <span>{metric.label}</span>
+              <span className="metric-icon">
+                <Icon name={metric.icon} />
+              </span>
+            </div>
+            <div className="metric-value-row">
+              <strong className="metric-value">{metric.value}</strong>
+              {metric.label === "System Status" && (
+                <Badge value={status.status} />
+              )}
+            </div>
+            <span className="metric-note">{metric.note}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className={`security-callout status-${status.status}`}>
+        <div className="security-callout-copy">
+          <span className="status-symbol">
+            <Icon name="shield" size={25} />
+          </span>
+          <div>
+            <span className="eyebrow">SECURITY POSTURE</span>
+            <h2>{status.message}</h2>
           </div>
-          <p>{status.message}</p>
         </div>
         <button className="text-button" onClick={() => navigate("alerts")}>
           Revisar alertas <Icon name="arrow" size={17} />
         </button>
       </section>
-      <section className="metrics" aria-label="Métricas principales">
-        {metrics.map((metric) => (
-          <article
-            className={`metric ${metric.critical ? "metric-critical" : ""}`}
-            key={metric.label}
-          >
-            <div className="metric-heading">
-              <span>{metric.label}</span>
-              <Icon name={metric.icon} />
-            </div>
-            <strong className="metric-value">{metric.value}</strong>
-            <span className="metric-note">{metric.note}</span>
-          </article>
-        ))}
+
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <h2>Alertas recientes</h2>
+            <p>Los cinco eventos más recientes · Hora local</p>
+          </div>
+          <button className="text-button" onClick={() => navigate("alerts")}>
+            Ver todas <Icon name="arrow" size={17} />
+          </button>
+        </div>
+        <AlertsTable alerts={alerts.slice(0, 5)} />
       </section>
+
       <div className="overview-middle">
+        <DeviceSnapshot devices={devices} navigate={navigate} />
         <section className="panel severity-panel">
           <div className="section-heading">
             <div>
               <h2>Distribución de alertas</h2>
-              <p>Severidad de todos los eventos registrados</p>
+              <p>Eventos agrupados por severidad</p>
             </div>
           </div>
           <div className="severity-bars">
@@ -92,36 +122,13 @@ export default function Overview({ data, navigate }) {
             )}
           </div>
         </section>
-        <section className="network-note">
-          <span className="eyebrow">ENTORNO DE DESARROLLO</span>
-          <Icon name="shield" size={44} />
-          <h2>Visibilidad desde el edge.</h2>
-          <p>
-            Alertas, dispositivos y servicios reunidos para entender la
-            seguridad de tu red.
-          </p>
-          <span className="network-note-footer">
-            <span className="live-dot" /> API local · Datos mock
-          </span>
-        </section>
       </div>
-      <section className="panel">
-        <div className="section-heading">
-          <div>
-            <h2>Últimas alertas</h2>
-            <p>Los cinco eventos más recientes · Hora local</p>
-          </div>
-          <button className="text-button" onClick={() => navigate("alerts")}>
-            Ver todas <Icon name="arrow" size={17} />
-          </button>
-        </div>
-        <AlertsTable alerts={alerts.slice(0, 5)} />
-      </section>
+
       <section>
         <div className="section-heading outside">
           <div>
             <h2>Estado de servicios</h2>
-            <p>Componentes de la infraestructura</p>
+            <p>Componentes principales de la infraestructura</p>
           </div>
           <button className="text-button" onClick={() => navigate("services")}>
             Ver detalles <Icon name="arrow" size={17} />
@@ -129,7 +136,6 @@ export default function Overview({ data, navigate }) {
         </div>
         <ServiceCards services={services} />
       </section>
-      <Architecture />
     </>
   );
 }

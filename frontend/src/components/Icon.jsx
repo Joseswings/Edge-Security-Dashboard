@@ -8,6 +8,12 @@ const paths = {
     "M20 7v5h-5 M4 17v-5h5 M5 8a8 8 0 0 1 13-3l2 3 M4 16l2 3a8 8 0 0 0 13-3",
   arrow: "M5 12h14 M14 7l5 5-5 5",
   search: "M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6",
+  pulse: "M3 12h4l2-6 4 12 2-6h6",
+  wifi: "M5 12.5a10 10 0 0 1 14 0 M8 16a6 6 0 0 1 8 0 M12 20h.01",
+  database:
+    "M4 6c0-2 16-2 16 0s-16 2-16 0Z M4 6v6c0 2 16 2 16 0V6 M4 12v6c0 2 16 2 16 0v-6",
+  cloud:
+    "M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 8.5 4.8 4.8 0 0 0 7 18Z",
 };
 
 export default function Icon({ name, size = 20, ...props }) {
