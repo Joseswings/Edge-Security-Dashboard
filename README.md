@@ -4,6 +4,17 @@ SaaS MVP de **Edge Cybersecurity Cloud** para consultar seguridad de red desde u
 
 **Stack:** React + Vite, JavaScript, CSS simple y Node.js + Express con ES Modules. El frontend consulta los cinco endpoints del backend mediante `fetch`. Los datos simulados viven exclusivamente en `backend/src/data/`.
 
+## Arquitectura de despliegue
+
+El backend se conserva porque transforma eventos estilo Suricata y calcula el resumen. Producción usa dos imágenes pequeñas:
+
+- **Frontend:** Vite compilado a archivos estáticos, servido por Nginx sin privilegios en `8080`; `/api` se reenvía a Express.
+- **Backend:** Node.js + Express en el puerto interno `3001`, sin exposición directa a la LAN.
+
+Docker Compose ejecuta ambos servicios en una red privada. K3s agrupa ambos contenedores en **un único Pod** con `replicas: 1` y publica solamente el NodePort **30081**. El NodePort `30080` queda reservado para `paas-web` y no se modifica.
+
+La guía completa para ARM64, Compose, K3s y diagnóstico está en [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Requisitos y ejecución local
 
 Node.js **22.12 o superior** y npm. Se recomienda Node.js 24 LTS. No necesitas Docker, Suricata ni PostgreSQL para ejecutar este MVP.
@@ -31,6 +42,41 @@ npm run dev
 Abre **http://127.0.0.1:5173**. Si tu terminal ya está dentro de `edge-security-dashboard`, usa simplemente `cd backend` o `cd frontend`.
 
 Vite reenvía `/api` al backend en `127.0.0.1:3001`. Así la configuración local no necesita CORS. Ambos procesos deben permanecer encendidos. Usa `Ctrl+C` para detenerlos.
+
+## Ejecución con Docker Compose
+
+Requiere Docker Engine o Docker Desktop con Compose v2:
+
+```bash
+cd edge-security-dashboard
+docker compose up --build -d
+docker compose ps
+curl http://127.0.0.1:8080/healthz
+curl http://127.0.0.1:8080/api/status
+```
+
+Abre **http://127.0.0.1:8080**. Para revisar logs o retirar únicamente este proyecto:
+
+```bash
+docker compose logs -f
+docker compose down
+```
+
+El `.env` de Compose es opcional; `.env.example` permite cambiar el puerto publicado y los nombres locales de imagen sin contener secretos.
+
+## Despliegue resumido en K3s
+
+Los manifiestos de `k8s/` usan `edge-cloud`. Las imágenes ARM64 deben estar importadas en containerd de K3s o publicadas en un registro antes de aplicar:
+
+```bash
+sudo k3s kubectl apply -f k8s/namespace.yaml
+sudo k3s kubectl apply -f k8s/configmap.yaml
+sudo k3s kubectl apply -f k8s/deployment.yaml
+sudo k3s kubectl apply -f k8s/service.yaml
+sudo k3s kubectl rollout status deployment/edge-security-dashboard -n edge-cloud
+```
+
+Acceso LAN: **http://IP_DE_LA_RASPBERRY:30081**. Consulta [DEPLOYMENT.md](DEPLOYMENT.md) para construir `linux/arm64`, transferir las imágenes y verificar que `paas-web` siga en `30080`.
 
 ### Configuración opcional
 
@@ -107,6 +153,8 @@ edge-security-dashboard/
 ├── backend/
 │   ├── package.json
 │   ├── .env.example
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── test/security.test.js
 │   └── src/
 │       ├── app.js                     # Express y errores HTTP
@@ -118,6 +166,9 @@ edge-security-dashboard/
 ├── frontend/
 │   ├── package.json
 │   ├── .env.example
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── nginx.conf
 │   ├── index.html
 │   ├── vite.config.js                 # React y proxy /api
 │   └── src/
@@ -127,6 +178,10 @@ edge-security-dashboard/
 │       ├── pages/                     # Overview, Alerts, Devices, Services
 │       ├── services/                  # fetch, carga/error y fechas
 │       └── styles/index.css           # Diseño responsive
+├── k8s/                               # Namespace, ConfigMap, Deployment y Service
+├── compose.yaml
+├── .env.example                       # Opciones Compose sin secretos
+├── DEPLOYMENT.md
 └── README.md
 ```
 
@@ -137,7 +192,7 @@ El `AGENTS.md` de la raíz del repositorio gobierna este proyecto y se conserva 
 1. Inicia ambos procesos y abre el frontend. Overview debe mostrar **Crítico**, 6 dispositivos, 8 alertas, 2 críticas y 3/4 servicios.
 2. Abre Alerts y selecciona `CRITICAL`: deben aparecer dos registros. Prueba búsqueda por IP y combina filtros. Una búsqueda sin coincidencias muestra un estado vacío; **Limpiar** restablece los resultados.
 3. Abre Devices y busca `ubuntu-security`: debe mostrar 4 eventos asociados.
-4. Abre Services: Database debe estar **Pendiente** y todos los servicios deben indicar **Simulado**.
+4. Abre Services: Database debe estar en **Warning** y todos los servicios deben indicar **Simulado**.
 5. Detén el backend y pulsa **Actualizar**: aparece el error con **Reintentar**, conservando los datos previos con aviso. Recarga sin backend para comprobar el error inicial. Reinícialo y pulsa **Reintentar** para recuperar la vista. Si una solicitud queda pendiente, se cancela a los 10 segundos.
 6. En las herramientas de desarrollo del navegador, pestaña Network, verifica solicitudes a los cinco endpoints. Para observar carga, activa una conexión lenta y recarga.
 7. Prueba la interfaz a ancho de móvil; las tablas permiten desplazamiento horizontal.
@@ -175,9 +230,9 @@ Reemplazar la lectura de fixtures en `alertService.js` por un lector o proceso d
 
 Crear después tablas de alertas y dispositivos. El proceso de ingestión guardará eventos normalizados; los servicios consultarán PostgreSQL mediante consultas parametrizadas. Los estados de revisión se persistirán en la base. Reemplazar los imports de fixtures y adaptar los controladores a servicios asíncronos conservando las URLs y contratos JSON. Añadir paginación y filtros del lado servidor cuando el volumen lo requiera.
 
-### Salud de servicios y despliegue
+### Salud de servicios
 
-Reemplazar `serviceHealthService.js` por comprobaciones reales de Docker, `systemctl` o endpoints de salud, con timeout. Actualizar también los campos `source` y las etiquetas de entorno del frontend al abandonar modo mock. Una fase posterior puede empaquetar API y frontend en Docker, servir `dist/` mediante un proxy y reenviar `/api` a Express dentro de la VM. Este MVP no instala Docker, Suricata ni PostgreSQL y no configura acceso a la VM.
+Reemplazar `serviceHealthService.js` por comprobaciones reales de Docker, `systemctl` o endpoints de salud, con timeout. Actualizar también los campos `source` y las etiquetas de entorno del frontend al abandonar modo mock. La configuración actual ya empaqueta API y frontend, sirve `dist/` con Nginx y reenvía `/api` a Express; todavía no instala Suricata ni PostgreSQL ni configura acceso a la VM.
 
 Se dejaron los TODO solicitados junto a cada punto de integración.
 

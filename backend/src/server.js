@@ -9,3 +9,18 @@ server.on("error", (error) => {
   console.error(`No se pudo iniciar la API: ${error.message}`);
   process.exitCode = 1;
 });
+
+function shutdown(signal) {
+  console.log(`${signal} recibido. Cerrando Edge Security API...`);
+  server.close((error) => {
+    if (error) {
+      console.error(`Error durante el cierre: ${error.message}`);
+      process.exit(1);
+    }
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
